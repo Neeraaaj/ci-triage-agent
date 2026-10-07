@@ -1,13 +1,6 @@
 import {SQSClient, ReceiveMessageCommand, DeleteMessageCommand} from '@aws-sdk/client-sqs';
-
-type TriageJob = {
-    deliveryId: string;
-    installationId: number;
-    repo: string;
-    runId: number;
-    headSha: string;
-    prNumbers: number[];
-};
+import { getRepoClient, fetchFailureContext } from './github.js';
+import {TriageJob} from './types/TriageJob.js';
 
 const QUEUE_URL = process.env.QUEUE_URL;
 if (!QUEUE_URL) {
@@ -17,7 +10,10 @@ if (!QUEUE_URL) {
 const sqs = new SQSClient({});
 
 async function handleJob(job: TriageJob) {
-    console.log({ msg: 'handling', ...job });
+    const octokit = await getRepoClient(job.installationId);
+    const ctx = await fetchFailureContext(octokit, job);
+    console.log({ msg: 'context', jobs: ctx.failedJobs.map(j => j.name), diffLines: ctx.diff.split('\n').length });
+    console.log(ctx.failedJobs[0]?.logTail);
 }
 
 async function main() {
