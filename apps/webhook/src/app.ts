@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { verifySignature } from './verify';
+import { verifySignature } from './verify.js';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 
 // ── Setup: runs once at startup ─────────────────────
