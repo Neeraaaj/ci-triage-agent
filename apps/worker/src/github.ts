@@ -1,5 +1,6 @@
 import { App } from 'octokit';
 import { readFileSync } from 'node:fs';
+import {cleanLog} from './logs.js';
 
 const ghApp = new App({
   appId: parseInt(process.env.GITHUB_APP_ID!, 10),
@@ -38,10 +39,9 @@ export async function fetchFailureContext(octokit: any, job: any) {
       job_id: failedJob.id,
     });
 
-    const logTail = String(logData ?? '')
-      .split('\n')
-      .slice(-150)
-      .join('\n');
+    const logTail = cleanLog(String(logData ?? ''));
+
+    console.log({ msg: 'log cleaned', rawLines: String(logData).split('\n').length, cleanLines: logTail.split('\n').length });
 
     failedJobContext.push({
       name: failedJob.name,
