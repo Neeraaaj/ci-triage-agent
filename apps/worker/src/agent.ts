@@ -2,19 +2,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { TriageResult } from './schema.js';
 import { toClaudeSchema } from './claudeSchema.js';
 import {SYSTEM} from './prompt.js'
-import { error } from 'node:console';
+import { FailureContext } from './types/FailureContext.js';
 
 const client = new Anthropic(); 
 
-
-type FailureContext = {
-  failedJobs: { name: string; failedStep: string | null; logTail: string }[];
-  diff: string;
-};
-
 export async function triage(ctx: FailureContext, model = 'claude-haiku-5-5') {
-  // TODO 1: build the user message string with <failed_step>, <log>, <diff> tags
-  //         (use ctx.failedJobs[0] for now; multi-job comes later)
   const job = ctx.failedJobs[0];
   const userMessage = `
     <failed_step>
