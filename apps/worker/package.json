@@ -11,8 +11,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
     "@aws-sdk/client-sqs": "^3.1146.0",
-    "octokit": "^5.0.5"
+    "octokit": "^5.0.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
