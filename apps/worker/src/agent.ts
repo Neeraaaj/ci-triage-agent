@@ -1,53 +1,23 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { callStructured } from './llm.js';
 import { TriageResult } from './schema.js';
-import { toClaudeSchema } from './claudeSchema.js';
-import {SYSTEM} from './prompt.js'
-import { FailureContext } from './types/FailureContext.js';
+import { SYSTEM } from './prompt.js';
+import type { FailureContext } from './types/FailureContext.js';
 
-const client = new Anthropic(); 
+function buildUserMessage(ctx: FailureContext) {
+  const job = ctx.failedJobs[0];
+  return [
+    `<failed_step>${job.failedStep ?? 'Unknown'}</failed_step>`,
+    `<log>\n${job.logTail}\n</log>`,
+    `<diff>\n${ctx.diff}\n</diff>`,
+  ].join('\n\n');
+}
 
 export async function triage(ctx: FailureContext, model = 'claude-haiku-5-5') {
-  const job = ctx.failedJobs[0];
-  const userMessage = `
-    <failed_step>
-    ${job.failedStep ?? 'Unknown'}
-    </failed_step>
-
-    <log>
-    ${job.logTail}
-    </log>
-
-    <diff>
-    ${ctx.diff}
-    </diff>
-    `
-  ;
-
-  const res = await client.messages.create({
+  const { data, usage } = await callStructured({
     model,
-    max_tokens: 4000,
     system: SYSTEM,
-    workspace_id: "wrkspc_01Pxi4pNBqneUo8e8TDGr544",
-    messages: [{ role: 'user', content:  userMessage }],
-    output_config: {
-      format: { type: 'json_schema', schema: toClaudeSchema(TriageResult) },
-    },
+    user: buildUserMessage(ctx),
+    schema: TriageResult,
   });
-
-  if (res.stop_reason === 'max_tokens' || res.stop_reason === 'refusal') {
-    throw new Error(`ANTHROPIC ERROR: ${res.stop_reason}, details: ${res.stop_details}`);
-  }
-
-  const textBlock = res.content.find((b: any) => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('ANTHROPIC ERROR: no text content returned');
-  }
-
-  const parsed = JSON.parse(textBlock.text);
-  const parsedResult = TriageResult.safeParse(parsed);
-  if (!parsedResult.success) {
-    throw new Error(parsedResult.error.message);
-  }
-
-  return { result: parsedResult.data, usage: res.usage };
+  return { result: data, usage };
 }
