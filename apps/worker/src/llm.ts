@@ -1,9 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { toClaudeSchema } from './claudeSchema.js';
-import { TriageResult } from './schema.js';
 
 const client = new Anthropic();
+
+export const MODELS = {
+  fast: 'claude-haiku-5-5',
+  smart: 'claude-sonnet-5-5',
+} as const;
 
 export async function callStructured<T extends z.ZodType>(opts: {
   model: string;
@@ -21,7 +25,6 @@ export async function callStructured<T extends z.ZodType>(opts: {
     output_config: { format: { type: 'json_schema', schema: toClaudeSchema(opts.schema) } },
   });
 
-  console.log('central hub for agent configs');
     if (res.stop_reason === 'max_tokens' || res.stop_reason === 'refusal') {
       throw new Error(`ANTHROPIC ERROR: ${res.stop_reason}, details: ${res.stop_details}`);
     }
