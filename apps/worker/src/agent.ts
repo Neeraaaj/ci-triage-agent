@@ -19,5 +19,9 @@ export async function triage(ctx: FailureContext, model = 'claude-haiku-5-5') {
     user: buildUserMessage(ctx),
     schema: TriageResult,
   });
-  return { result: data, usage };
+  return { result: {
+    ...data,
+    failedStep: ctx.failedJobs[0].failedStep ?? "unknown",
+  },
+  usage };
 }
