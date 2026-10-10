@@ -16,15 +16,7 @@ export function checkEvidence(result: TriageResult, ctx: FailureContext): { ok: 
         ? logText
         : diffText;
 
-    const normalizedHaystack = haystack
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const normalizedQuote = evidence.quote
-        .replace(/\s+/g, " ")
-        .trim();
-
-    if (!normalizedHaystack.includes(normalizedQuote)) {
+    if (!haystack.includes(norm(evidence.quote))) {
         missing.push(evidence.quote);
     }
     }
