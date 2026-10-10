@@ -3,6 +3,8 @@ import type { TriageJob } from './types/TriageJob.js';   // ← adjust to your f
 import { triage } from './agent.js';   // put this with the other imports at the top
 import { checkEvidence } from './verify.js';
 import { loadCase } from './replay.js';
+import { writeFileSync } from 'node:fs';
+import { renderComment } from './comment.js';
 
 const runId = Number(process.argv[2]);
 if (!runId) throw new Error('usage: tsx src/inspect.ts <runId>');
@@ -20,4 +22,6 @@ const { result, usage } = await triage(ctx);
 console.log('\n===== TRIAGE =====');
 console.log(JSON.stringify(result, null, 2));
 console.log({ ms: Date.now() - t0, inputTokens: usage.input_tokens, outputTokens: usage.output_tokens });
-console.log('evidence check →', checkEvidence(result, ctx));
+const md = renderComment(result, checkEvidence(result, ctx), runId);
+writeFileSync('comment-preview.md', md);
+console.log('wrote comment-preview.md');
