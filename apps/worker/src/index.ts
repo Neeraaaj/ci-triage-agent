@@ -3,6 +3,8 @@ import { getRepoClient, fetchFailureContext } from './github.js';
 import {TriageJob} from './types/TriageJob.js';
 import { checkEvidence } from './verify.js';
 import { triage } from './agent.js';
+import { renderComment } from './comment.js';
+import { upsertComment } from './post.js';
 
 const QUEUE_URL = process.env.QUEUE_URL;
 if (!QUEUE_URL) {
@@ -22,7 +24,7 @@ async function handleJob(job: TriageJob) {
         });
         return;
     }
-    
+
     const t0 = Date.now();
     const { result, usage } = await triage(ctx);
     const evidence = checkEvidence(result, ctx);
@@ -43,6 +45,9 @@ async function handleJob(job: TriageJob) {
         outputTokens: usage.output_tokens,
     });
 
+    const body = renderComment(result, evidence, job.runId);
+    const posted = await upsertComment(octokit, job, body);
+    console.log({ msg: 'comment', runId: job.runId, ...posted });
     return { result, evidence, octokit };  
 }
 
