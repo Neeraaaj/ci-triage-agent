@@ -2,18 +2,25 @@ import { App } from 'octokit';
 import { readFileSync } from 'node:fs';
 import {cleanLog} from './logs.js';
 
-const APP_ID = process.env.GITHUB_APP_ID;
-if (!APP_ID) throw new Error('GITHUB_APP_ID is not set');
+let ghApp: App | undefined;
 
-const keyPath = process.env.GITHUB_PRIVATE_KEY_PATH;
-const privateKey =
-  process.env.GITHUB_PRIVATE_KEY ?? (keyPath ? readFileSync(keyPath, 'utf8') : undefined);
-if (!privateKey) throw new Error('Set GITHUB_PRIVATE_KEY or GITHUB_PRIVATE_KEY_PATH');
+function getApp(): App {
+  if (ghApp) return ghApp;  
 
-const ghApp = new App({ appId: Number(APP_ID), privateKey });
+  const appId = process.env.GITHUB_APP_ID;
+  if (!appId) throw new Error('GITHUB_APP_ID is not set');
+
+  const keyPath = process.env.GITHUB_PRIVATE_KEY_PATH;
+  const privateKey =
+    process.env.GITHUB_PRIVATE_KEY ?? (keyPath ? readFileSync(keyPath, 'utf8') : undefined);
+  if (!privateKey) throw new Error('Set GITHUB_PRIVATE_KEY or GITHUB_PRIVATE_KEY_PATH');
+
+  ghApp = new App({ appId: Number(appId), privateKey });
+  return ghApp;
+}
 
 export async function getRepoClient(installationId: number) {
-  return ghApp.getInstallationOctokit(installationId);
+  return getApp().getInstallationOctokit(installationId);
 }
 
 export async function fetchFailureContext(octokit: any, job: any) {

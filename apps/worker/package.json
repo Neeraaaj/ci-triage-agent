@@ -12,11 +12,13 @@
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.132.1",
+    "@aws-sdk/client-secrets-manager": "^3.1149.0",
     "@aws-sdk/client-sqs": "^3.1146.0",
     "octokit": "^5.0.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.164",
     "@types/node": "^26.6.4",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"

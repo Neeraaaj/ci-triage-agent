@@ -2,7 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { toClaudeSchema } from './claudeSchema.js';
 
-const client = new Anthropic();
+let client: Anthropic | undefined;
+const getClient = () => (client ??= new Anthropic());
 
 export const MODELS = {
   fast: 'claude-haiku-5-5',
@@ -16,7 +17,7 @@ export async function callStructured<T extends z.ZodType>(opts: {
   schema: T;
   maxTokens?: number;
 }) {
-  const res = await client.messages.create({
+  const res = await getClient().messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens ?? 4000,
     system: opts.system,
