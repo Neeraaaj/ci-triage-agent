@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { verifySignature } from './verify.js';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { getWebhookSecret } from './config.js';
 
 // ── Setup: runs once at startup ─────────────────────
-const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
-if (!WEBHOOK_SECRET) throw new Error('GITHUB_WEBHOOK_SECRET is not set');
+
 
 const QUEUE_URL = process.env.QUEUE_URL;
 if (!QUEUE_URL) throw new Error('QUEUE_URL is not set');
@@ -20,7 +20,9 @@ app.post('/webhook', async (c) => {
   const deliveryId = c.req.header('x-github-delivery');
   const signature = c.req.header('x-hub-signature-256');
 
-  if (!verifySignature(WEBHOOK_SECRET, rawBody, signature)) {
+  const secret = await getWebhookSecret();
+  
+  if (!verifySignature(secret, rawBody, signature)) {
     return c.text('invalid signature', 401);
   }
 
