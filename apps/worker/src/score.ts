@@ -12,7 +12,9 @@ export function scoreDeterministic(c: EvalCase, r: TriageResult, evidenceOk: boo
   const fileOk = file !== null &&                                   
   accepted.some((f) => cleanPath(f) === cleanPath(file));  
 
-  const fixInOk = same(c.fixIn, r.fixIn);
+  const acceptedFixes = Array.isArray(c.fixIn) ? c.fixIn : [c.fixIn];
+
+  const fixInOk = acceptedFixes.some((f) => same(f, r.fixIn));
 
   return { stepOk, fileOk, fixInOk, evidenceOk };
 }
