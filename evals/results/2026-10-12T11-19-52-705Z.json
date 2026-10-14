@@ -1,0 +1,1525 @@
+{
+  "model": "claude-haiku-5-5",
+  "rows": [
+    {
+      "id": "01",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4069,
+      "confidence": 0.97,
+      "agentCost": 0.000473,
+      "judgeCost": 0.0001082,
+      "missingQuotes": [],
+      "judgeReason": "The reference says subtotal adds price + qty instead of multiplying price * qty. The candidate identifies the same bug in subtotal(): the reducer was changed from multiplication to addition, with a concrete example showing (10+2)+(5+1)=18 versus the expected 25. This is the same mistake in the same place.",
+      "answer": {
+        "summary": "subtotal() in src/cart.ts now adds price and qty instead of multiplying them, so the 'sums price × qty' test gets 18 instead of 25.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The diff changed the reducer in subtotal() from multiplication to addition. For items [{price:10,qty:2},{price:5,qty:1}] the buggy code returns (10+2)+(5+1)=18, while the test expects 10*2+5*1=25.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "-  return items.reduce((sum, i) => sum + i.price * i.qty, 0);"
+          },
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price + i.qty, 0);"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 18 to be 25 // Object.is equality"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the multiplication in subtotal(): sum + i.price * i.qty.",
+        "confidence": 0.97
+      }
+    },
+    {
+      "id": "01",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4204,
+      "confidence": 0.97,
+      "agentCost": 0.0005285,
+      "judgeCost": 0.0001047,
+      "missingQuotes": [],
+      "judgeReason": "The reference says subtotal adds price and qty instead of multiplying them. The candidate describes the same mistake in subtotal()'s reducer, where sum + i.price * i.qty was changed to sum + i.price + i.qty, with a worked example showing the addition error. The two match.",
+      "answer": {
+        "summary": "subtotal() in src/cart.ts adds price and qty instead of multiplying them, so the cart sum test gets 18 instead of 25.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The reducer in subtotal() was changed from sum + i.price * i.qty to sum + i.price + i.qty. For items [{price:10,qty:2},{price:5,qty:1}] this yields (10+2)+(5+1)=18, while the test expects price×qty summed to 25. The test expectation is correct; the code is wrong.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 18 to be 25 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "return items.reduce((sum, i) => sum + i.price + i.qty, 0);"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore multiplication in the reducer: return items.reduce((sum, i) => sum + i.price * i.qty, 0);",
+        "confidence": 0.97
+      }
+    },
+    {
+      "id": "01",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3385,
+      "confidence": 0.97,
+      "agentCost": 0.0004535,
+      "judgeCost": 0.00010070000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says subtotal adds price + qty instead of multiplying price * qty. The candidate states the same mistake in subtotal's reduce callback: it adds price and qty rather than multiplying them, with a worked example confirming the wrong result. This matches the reference.",
+      "answer": {
+        "summary": "subtotal() in src/cart.ts adds price and qty instead of multiplying them, so the 'sums price × qty' test gets 18 instead of 25.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The reduce callback in subtotal() was changed from multiplying price by qty to adding them. For [{price:10,qty:2},{price:5,qty:1}] this yields (10+2)+(5+1)=18 rather than 20+5=25. The test expectation is correct and the code is wrong.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 18 to be 25 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price + i.qty, 0);"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore multiplication in the reduce callback: return items.reduce((sum, i) => sum + i.price * i.qty, 0);",
+        "confidence": 0.97
+      }
+    },
+    {
+      "id": "02",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3618,
+      "confidence": 0.95,
+      "agentCost": 0.0004713,
+      "judgeCost": 0.0001373,
+      "missingQuotes": [],
+      "judgeReason": "The reference says applyDiscount wrongly computes amount * (1 - pct) / 100, treating pct as a fraction, when it should be amount * (1 - pct / 100). The candidate identifies the same misplaced formula: pct is used as a whole number inside (1 - pct) with division by 100 applied to the product, and the correct form is pct / 100 inside the parentheses. The extra claim about a removed rounding step is additional detail and does not contradict the core cause.",
+      "answer": {
+        "summary": "applyDiscount in src/cart.ts returns -18 instead of 180 for a 10% discount on 200 because the diff changed the percentage math.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The diff changed applyDiscount to use pct as a whole number inside (1 - pct) and divide the product by 100, so 200 * (1 - 10) / 100 = -18. The original formula used pct / 100 inside the parentheses. The rounding step was also removed. The test expectation of 180 is correct.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "-  return Math.round(amount * (1 - pct / 100) * 100) / 100;"
+          },
+          {
+            "source": "diff",
+            "quote": "+  return amount * (1 - pct) / 100;"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected -18 to be 180 // Object.is equality"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the percentage conversion: return amount * (1 - pct / 100); and optionally restore Math.round(... * 100) / 100 to keep two-decimal rounding.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "02",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3311,
+      "confidence": 0.95,
+      "agentCost": 0.0004388,
+      "judgeCost": 0.00012440000000000002,
+      "missingQuotes": [],
+      "judgeReason": "The reference says applyDiscount wrongly treats pct as a fraction in amount * (1 - pct) / 100, and should be amount * (1 - pct / 100). The candidate identifies the same bad formula (1 - pct instead of 1 - pct / 100) in the same spot, with a worked example, but also adds a claim about a removed rounding step that the reference does not mention; the core error still matches.",
+      "answer": {
+        "summary": "applyDiscount(200, 10) returns -18 instead of 180 because the commit changed the discount formula to amount * (1 - pct) / 100, which mixes a percentage with a fraction.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "In src/cart.ts, the new formula uses (1 - pct) instead of (1 - pct / 100). With pct=10 this gives 200 * (1 - 10) / 100 = -18. The rounding step was also removed. The test expectation of 180 is correct.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "+  return amount * (1 - pct) / 100;"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected -18 to be 180 // Object.is equality"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the percentage conversion: return Math.round(amount * (1 - pct / 100) * 100) / 100;",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "02",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3578,
+      "confidence": 0.95,
+      "agentCost": 0.0004843,
+      "judgeCost": 0.00011970000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says applyDiscount wrongly computes amount * (1 - pct) / 100, treating pct as a fraction, when it should be amount * (1 - pct / 100). The candidate identifies the same faulty expression amount * (1 - pct) / 100 and the same correct fix amount * (1 - pct / 100), with a worked example. This matches the reference.",
+      "answer": {
+        "summary": "applyDiscount(200, 10) returns -18 instead of 180 because the commit changed the discount formula to amount * (1 - pct) / 100, which subtracts the percentage from 1 rather than the fraction pct/100.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "In src/cart.ts, applyDiscount was changed to compute amount * (1 - pct) / 100. With pct=10 this is 200 * (1 - 10) / 100 = -18. The correct expression is amount * (1 - pct / 100). The test expectation of 180 is correct.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected -18 to be 180 // Object.is equality"
+          },
+          {
+            "source": "log",
+            "quote": "     9|     expect(applyDiscount(200, 10)).toBe(180);"
+          },
+          {
+            "source": "diff",
+            "quote": "-  return Math.round(amount * (1 - pct / 100) * 100) / 100;"
+          },
+          {
+            "source": "diff",
+            "quote": "+  return amount * (1 - pct) / 100;"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the percentage conversion: return amount * (1 - pct / 100); and optionally restore the rounding with Math.round(... * 100) / 100 to match the previous behavior.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "03",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2865,
+      "confidence": 0.97,
+      "agentCost": 0.00029920000000000006,
+      "judgeCost": 0.0001015,
+      "missingQuotes": [],
+      "judgeReason": "The reference says subtotal returns a string from toFixed(2) while being declared as number. The candidate identifies the same problem: .toFixed(2) appended in subtotal() returns a string while the signature declares number. The extra detail about TS2322 and line 4 does not contradict it.",
+      "answer": {
+        "summary": "Typecheck fails because subtotal() now returns the result of toFixed(2), which is a string, but its declared return type is number.",
+        "category": "code_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The diff appends .toFixed(2) to the reduce call in subtotal(). Number.prototype.toFixed returns a string, so the function returns string while its signature declares : number, causing TS2322 at src/cart.ts line 4.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "src/cart.ts(4,3): error TS2322: Type 'string' is not assignable to type 'number'."
+          },
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(2);"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Remove .toFixed(2) so subtotal returns a number, or if a formatted string is intended, change the return type and update all callers accordingly.",
+        "confidence": 0.97
+      }
+    },
+    {
+      "id": "03",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2938,
+      "confidence": 0.95,
+      "agentCost": 0.00030770000000000005,
+      "judgeCost": 0.000102,
+      "missingQuotes": [],
+      "judgeReason": "The reference says subtotal returns a string from toFixed(2) while declared as number. The candidate identifies the same problem: .toFixed(2) appended in subtotal() returns a string while the signature declares number. The extra detail about TS2322 and line 4 does not contradict the reference.",
+      "answer": {
+        "summary": "Typecheck fails because subtotal() now returns the result of toFixed(2), which is a string, but its declared return type is number.",
+        "category": "code_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The diff appends .toFixed(2) to the reduce call in subtotal(). Number.prototype.toFixed returns a string, so the function returns string while its signature declares : number, causing TS2322 at src/cart.ts line 4.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "src/cart.ts(4,3): error TS2322: Type 'string' is not assignable to type 'number'."
+          },
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(2);"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Remove .toFixed(2) so subtotal returns the numeric sum, or if formatted output is intended, change the return type and callers accordingly (e.g. return a string type or format at the display layer).",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "03",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2971,
+      "confidence": 0.95,
+      "agentCost": 0.0003267,
+      "judgeCost": 0.00009130000000000001,
+      "missingQuotes": [],
+      "judgeReason": "Both identify the same mistake: subtotal() calls toFixed(2), which yields a string, while the function is declared to return number. The candidate adds a file/line location, which is extra detail that does not conflict with the reference.",
+      "answer": {
+        "summary": "Typecheck fails because subtotal() now returns the result of toFixed(2), which is a string, but its declared return type is number.",
+        "category": "code_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The diff appends .toFixed(2) to the reduce call in subtotal(). Number.prototype.toFixed returns a string, so the function returns string while its signature declares number. The compiler reports this at src/cart.ts line 4 column 3.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "src/cart.ts(4,3): error TS2322: Type 'string' is not assignable to type 'number'."
+          },
+          {
+            "source": "diff",
+            "quote": "-  return items.reduce((sum, i) => sum + i.price * i.qty, 0);"
+          },
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(2);"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Remove .toFixed(2) so subtotal returns the numeric sum. If a formatted string is needed, change the return type and update callers, or format at the display layer instead.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "04",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3248,
+      "confidence": 0.85,
+      "agentCost": 0.0003393,
+      "judgeCost": 0.00010630000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test imports '../src/slugs.js', which doesn't exist, when the module is '../src/slug.js'. The candidate identifies the same wrong import path ('../src/slugs.js' vs the real slug.js) in the test file, causing an unresolved import, so it matches.",
+      "answer": {
+        "summary": "Typecheck fails because test/slug.test.ts imports from '../src/slugs.js', a module path that does not exist; the diff changed the import from '../src/slug.js' to '../src/slugs.js'.",
+        "category": "test_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The test import path was changed to '../src/slugs.js' in the commit, but the module being imported is named slug (src/slug.js per the original import). The import target does not resolve, so tsc reports TS2307. The diff shows only the test file changed, so the mismatch is a typo in the renamed import rather than a code defect.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "test/slug.test.ts(2,25): error TS2307: Cannot find module '../src/slugs.js' or its corresponding type declarations."
+          },
+          {
+            "source": "diff",
+            "quote": "-import { slugify } from '../src/slug.js';"
+          },
+          {
+            "source": "diff",
+            "quote": "+import { slugify } from '../src/slugs.js';"
+          }
+        ],
+        "file": "test/slug.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Change the import back to '../src/slug.js', or rename src/slug.ts to src/slugs.ts if the rename was intended and update all other imports accordingly.",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "04",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3067,
+      "confidence": 0.8,
+      "agentCost": 0.00034930000000000003,
+      "judgeCost": 0.0001191,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test imports '../src/slugs.js' while the actual module is '../src/slug.js', a wrong import path in the test. The candidate identifies the same wrong import ('../src/slugs.js' versus the correct '../src/slug.js') in the test, so it matches the underlying problem even though it adds a claim about the commit diff and typecheck step.",
+      "answer": {
+        "summary": "Typecheck fails because test/slug.test.ts imports from '../src/slugs.js', a module path that does not resolve; the diff changed the import from '../src/slug.js' to '../src/slugs.js' (note the extra 's').",
+        "category": "test_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The test import path was changed in this commit to '../src/slugs.js', which does not match the module the test originally targeted ('../src/slug.js'). TypeScript cannot find the module, so the typecheck step fails. The log does not show whether src/slug.ts exists or whether src/slugs.ts exists, so the correct filename is inferred from the diff only.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "test/slug.test.ts(2,25): error TS2307: Cannot find module '../src/slugs.js' or its corresponding type declarations."
+          },
+          {
+            "source": "diff",
+            "quote": "-import { slugify } from '../src/slug.js';"
+          },
+          {
+            "source": "diff",
+            "quote": "+import { slugify } from '../src/slugs.js';"
+          }
+        ],
+        "file": "test/slug.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Revert the import to the original path '../src/slug.js' if that is the module that exports slugify, or otherwise correct the path to the file that actually exports slugify.",
+        "confidence": 0.8
+      }
+    },
+    {
+      "id": "04",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2825,
+      "confidence": 0.85,
+      "agentCost": 0.0003303,
+      "judgeCost": 0.00010080000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test imports a nonexistent '../src/slugs.js' when the module is '../src/slug.js'. The candidate identifies the same wrong import path and the same correct module location, so the underlying mistake matches; the added TS2307 detail is extra but consistent.",
+      "answer": {
+        "summary": "Typecheck fails because test/slug.test.ts imports from '../src/slugs.js', a module path that does not exist; the diff renamed the import from '../src/slug.js' to '../src/slugs.js' without the source file being renamed.",
+        "category": "test_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The test import path was changed to '../src/slugs.js' but the module is at '../src/slug.js' (the diff shows the old path was the original). TypeScript cannot resolve the new path, so the import fails with TS2307.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "test/slug.test.ts(2,25): error TS2307: Cannot find module '../src/slugs.js' or its corresponding type declarations."
+          },
+          {
+            "source": "diff",
+            "quote": "-import { slugify } from '../src/slug.js';"
+          },
+          {
+            "source": "diff",
+            "quote": "+import { slugify } from '../src/slugs.js';"
+          }
+        ],
+        "file": "test/slug.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Revert the import to '../src/slug.js', or if the module was intentionally renamed to slugs.ts, include that rename in the commit so src/slugs.ts exists.",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "05",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2538,
+      "confidence": 0.95,
+      "agentCost": 0.0003433,
+      "judgeCost": 0.000122,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test sets process.env.APIURL instead of API_URL, so loadConfig throws 'API_URL is not set'. The candidate says the test's env var was misnamed as APIURL instead of API_URL (a typo in the diff), causing loadConfig to throw because API_URL is missing. These describe the same mistake in the same place, with the candidate adding that the commit introduced it.",
+      "answer": {
+        "summary": "The config test sets process.env.APIURL instead of process.env.API_URL, so loadConfig() sees API_URL as unset and throws.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit changed the test's environment variable name from API_URL to APIURL. src/config.ts still reads process.env.API_URL, so the variable is missing and loadConfig throws. The code is correct; the test's env var name is a typo introduced by the diff.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "+  process.env.APIURL = 'https://api.example.com';"
+          },
+          {
+            "source": "log",
+            "quote": "  const apiUrl = process.env.API_URL;"
+          },
+          {
+            "source": "log",
+            "quote": "Error: API_URL is not set"
+          }
+        ],
+        "file": "test/config.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Change the line back to process.env.API_URL = 'https://api.example.com'; in test/config.test.ts.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "05",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2629,
+      "confidence": 0.95,
+      "agentCost": 0.0003378,
+      "judgeCost": 0.0001092,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test sets process.env.APIURL instead of API_URL, causing loadConfig to throw 'API_URL is not set'. The candidate says the test uses the wrong env var name APIURL rather than API_URL, so loadConfig finds API_URL unset and throws the same error. The mistake and location match.",
+      "answer": {
+        "summary": "The config test fails because it sets process.env.APIURL instead of process.env.API_URL, so loadConfig sees API_URL unset and throws.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The test commit renamed the environment variable in the test from API_URL to APIURL. loadConfig reads process.env.API_URL, which is never set, so it throws 'API_URL is not set'. The code is correct; the test's env var name is wrong.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "+  process.env.APIURL = 'https://api.example.com';"
+          },
+          {
+            "source": "log",
+            "quote": "Error: API_URL is not set"
+          },
+          {
+            "source": "log",
+            "quote": "  const apiUrl = process.env.API_URL;"
+          }
+        ],
+        "file": "test/config.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Change the test line back to process.env.API_URL = 'https://api.example.com';",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "05",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2631,
+      "confidence": 0.95,
+      "agentCost": 0.0003463,
+      "judgeCost": 0.00011780000000000002,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test sets process.env.APIURL instead of API_URL, causing loadConfig to throw 'API_URL is not set'. The candidate says the test diff renamed the variable to APIURL while config reads API_URL, which is never set, so loadConfig throws the same error, and it places the typo in the test. These describe the same mistake in the same place, so they match.",
+      "answer": {
+        "summary": "The config test sets process.env.APIURL instead of process.env.API_URL, so loadConfig() sees API_URL unset and throws.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The test diff renamed the environment variable from API_URL to APIURL. src/config.ts reads process.env.API_URL, which is never set in the test, so loadConfig throws 'API_URL is not set'. The code is correct; the test has a typo in the env var name.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "+  process.env.APIURL = 'https://api.example.com';"
+          },
+          {
+            "source": "log",
+            "quote": "Error: API_URL is not set"
+          },
+          {
+            "source": "log",
+            "quote": "  const apiUrl = process.env.API_URL;"
+          }
+        ],
+        "file": "test/config.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Change the test to set process.env.API_URL = 'https://api.example.com' again, matching the name read in src/config.ts.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "06",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4054,
+      "confidence": 0.95,
+      "agentCost": 0.000485,
+      "judgeCost": 0.00011109999999999999,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the commit removed the replace that trims leading/trailing dashes, causing slugify to return 'hello-world-'. The candidate also identifies removal of the dash-trimming replace in slugify, leading to a trailing dash remaining, so the same underlying mistake is identified; its extra detail about ordering is consistent with that.",
+      "answer": {
+        "summary": "The slugify function in src/slug.ts no longer strips leading and trailing dashes, so the test input '  Hello, World! ' produces 'hello-world-' instead of 'hello-world'.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit removed the final .replace(/^-|-$/g, '') call from slugify. The trim happens before the non-alphanumeric replacement, so the trailing '! ' becomes a trailing dash that is no longer removed.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "-    .replace(/^-|-$/g, '');"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 'hello-world-' to be 'hello-world' // Object.is equality"
+          }
+        ],
+        "file": "src/slug.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the removed line so the chain ends with .replace(/^-|-$/g, ''); before the closing brace of slugify.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "06",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4258,
+      "confidence": 0.95,
+      "agentCost": 0.0005205,
+      "judgeCost": 0.0001117,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the commit removed the replace that trims leading/trailing dashes, so slugify returns 'hello-world-'. The candidate says the commit deleted the final .replace(/^-|-$/g, '') call, leaving a trailing dash from a trailing '!', which is the same mistake in the same place with a concrete example.",
+      "answer": {
+        "summary": "slugify('  Hello, World! ') now returns 'hello-world-' instead of 'hello-world' because the commit removed the step that strips leading and trailing dashes.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit deleted the final .replace(/^-|-$/g, '') call from slugify. Without it, the trailing non-alphanumeric '!' becomes a trailing '-' that is never removed, so the output keeps a trailing dash. The test expectation is correct, so the code is at fault.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 'hello-world-' to be 'hello-world' // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "-    .replace(/^-|-$/g, '');"
+          }
+        ],
+        "file": "src/slug.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the removed line so the chain ends with .replace(/[^a-z0-9]+/g, '-') followed by .replace(/^-|-$/g, '');",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "06",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4850,
+      "confidence": 0.92,
+      "agentCost": 0.0006065,
+      "judgeCost": 0.0001186,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the commit removed the replace that trims leading/trailing dashes, causing slugify to return 'hello-world-'. The candidate says the commit deleted the final .replace(/^-|-$/g, '') step in slugify, which likewise leaves a trailing dash so output is 'hello-world-'. Same removed step, same resulting bug.",
+      "answer": {
+        "summary": "The slugify test fails because the trailing-dash stripping replace was removed from src/slug.ts, so titles with trailing punctuation keep a trailing hyphen.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit deleted the final .replace(/^-|-$/g, '') step in slugify. The input '  Hello, World! ' becomes 'hello-world-' after lowercasing, trimming, and collapsing non-alphanumeric runs to '-', and nothing strips the trailing '-' anymore. The test expectation 'hello-world' is correct, so the code is at fault.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "-    .replace(/^-|-$/g, '');"
+          },
+          {
+            "source": "log",
+            "quote": "expected 'hello-world-' to be 'hello-world' // Object.is equality"
+          }
+        ],
+        "file": "src/slug.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the removed line so the chain ends with .replace(/^-|-$/g, ''); i.e. add it back after .replace(/[^a-z0-9]+/g, '-') and keep the semicolon.",
+        "confidence": 0.92
+      }
+    },
+    {
+      "id": "07",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3132,
+      "confidence": 0.9,
+      "agentCost": 0.0003126,
+      "judgeCost": 0.0000954,
+      "missingQuotes": [],
+      "judgeReason": "The reference says slugify was renamed to toSlug in src while the test still imports slugify. The candidate states the same thing: the export was renamed to toSlug and the test still imports slugify, causing the missing export. The file paths are extra detail, not a conflict.",
+      "answer": {
+        "summary": "Typecheck fails because test/slug.test.ts imports slugify from src/slug.js, but the commit renamed the export to toSlug.",
+        "category": "code_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The commit renamed the exported function slugify to toSlug in src/slug.ts, but test/slug.test.ts still imports slugify, so the module no longer exports that name.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "test/slug.test.ts(2,10): error TS2305: Module '\"../src/slug.js\"' has no exported member 'slugify'."
+          },
+          {
+            "source": "diff",
+            "quote": "-export function slugify(input: string): string {"
+          },
+          {
+            "source": "diff",
+            "quote": "+export function toSlug(input: string): string {"
+          }
+        ],
+        "file": "src/slug.ts",
+        "fixIn": "code",
+        "suggestedFix": "Either restore the export name slugify in src/slug.ts (or export toSlug alongside it as an alias), or update test/slug.test.ts and any other importers to use toSlug. Other importers of slugify in the repo were not visible in the provided diff, so they should be checked as well.",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "07",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3066,
+      "confidence": 0.9,
+      "agentCost": 0.00032260000000000004,
+      "judgeCost": 0.00009690000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says slugify was renamed to toSlug in src while the test still imports slugify. The candidate says the same thing: the export was renamed to toSlug and the test file still imports slugify, so the import breaks. The extra file paths are correct detail, not a conflict.",
+      "answer": {
+        "summary": "Typecheck fails because test/slug.test.ts imports slugify from src/slug.js, but the commit renamed the export to toSlug.",
+        "category": "code_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The commit renamed the exported function slugify to toSlug in src/slug.ts, but test/slug.test.ts still imports slugify, so the module no longer exports that name.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "test/slug.test.ts(2,10): error TS2305: Module '\"../src/slug.js\"' has no exported member 'slugify'."
+          },
+          {
+            "source": "diff",
+            "quote": "-export function slugify(input: string): string {"
+          },
+          {
+            "source": "diff",
+            "quote": "+export function toSlug(input: string): string {"
+          }
+        ],
+        "file": "src/slug.ts",
+        "fixIn": "code",
+        "suggestedFix": "Either restore the export name slugify in src/slug.ts (or export toSlug as slugify too), or update test/slug.test.ts and any other importers to use toSlug. Renaming an exported API without updating its callers is the likely mistake, so restoring the name or updating all imports is the fix; the diff alone does not show whether other importers exist.",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "07",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2905,
+      "confidence": 0.9,
+      "agentCost": 0.00030710000000000004,
+      "judgeCost": 0.0000894,
+      "missingQuotes": [],
+      "judgeReason": "The reference says slugify was renamed to toSlug in src while the test still imports slugify. The candidate describes the same rename and the same stale import in the test, adding file paths and the consequence that the export no longer exists. These match.",
+      "answer": {
+        "summary": "Typecheck fails because test/slug.test.ts imports slugify from src/slug.js, but the commit renamed the export to toSlug.",
+        "category": "code_bug",
+        "failedStep": "Typecheck",
+        "rootCause": "The commit renamed the exported function slugify to toSlug in src/slug.ts, but test/slug.test.ts still imports slugify, so the module no longer exports that name.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "test/slug.test.ts(2,10): error TS2305: Module '\"../src/slug.js\"' has no exported member 'slugify'."
+          },
+          {
+            "source": "diff",
+            "quote": "-export function slugify(input: string): string {"
+          },
+          {
+            "source": "diff",
+            "quote": "+export function toSlug(input: string): string {"
+          }
+        ],
+        "file": "src/slug.ts",
+        "fixIn": "code",
+        "suggestedFix": "Either restore the export name slugify in src/slug.ts (or export both names), or update test/slug.test.ts and any other importers to import toSlug. Renaming the export without updating its consumers is the cause; the rename is most likely the unintended change.",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "08",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 5008,
+      "confidence": 0.8,
+      "agentCost": 0.000605,
+      "judgeCost": 0.0001087,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the error message was changed to 'discount out of range' while the test still expects 'invalid discount'. The candidate states the same mismatch: the message was changed from 'invalid discount' to 'discount out of range' and the unchanged test still expects the original message. The candidate adds file names, which is extra detail that does not contradict the reference.",
+      "answer": {
+        "summary": "The test expects applyDiscount to throw 'invalid discount', but the diff changed the thrown message to 'discount out of range', so the assertion fails.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit changed the error message in src/cart.ts from 'invalid discount' to 'discount out of range' without updating test/cart.test.ts, which still expects the original message.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected [Function] to throw error including 'invalid discount' but got 'discount out of range'"
+          },
+          {
+            "source": "diff",
+            "quote": "+  if (pct < 0 || pct > 100) throw new Error('discount out of range');"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the original message 'invalid discount' in src/cart.ts, or if the new message is intended, update the expectation in test/cart.test.ts to 'discount out of range'.",
+        "confidence": 0.8
+      }
+    },
+    {
+      "id": "08",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 6803,
+      "confidence": 0.75,
+      "agentCost": 0.0007245,
+      "judgeCost": 0.00010740000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the error message was changed to 'discount out of range' while the test still expects 'invalid discount'. The candidate says the same thing: the thrown message in applyDiscount was renamed, and the unchanged test asserting the old message now fails. The extra detail about other tests passing is consistent and does not contradict the reference.",
+      "answer": {
+        "summary": "The test 'rejects invalid discounts' fails because src/cart.ts changed the error message from 'invalid discount' to 'discount out of range', while the test still expects the old text.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit renamed the thrown error message in applyDiscount. The unchanged test asserts the previous message, so toThrow('invalid discount') no longer matches. The other tests pass, so this is the only failure.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected [Function] to throw error including 'invalid discount' but got 'discount out of range'"
+          },
+          {
+            "source": "diff",
+            "quote": "-  if (pct < 0 || pct > 100) throw new Error('invalid discount');"
+          },
+          {
+            "source": "diff",
+            "quote": "+  if (pct < 0 || pct > 100) throw new Error('discount out of range');"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the original message 'invalid discount' in applyDiscount so the existing test passes. If the new wording is intended, update the expectation in test/cart.test.ts to 'discount out of range' instead. The diff alone does not show which message is the intended contract.",
+        "confidence": 0.75
+      }
+    },
+    {
+      "id": "08",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 5732,
+      "confidence": 0.75,
+      "agentCost": 0.0006935,
+      "judgeCost": 0.00010070000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the error message was changed to 'discount out of range' while the test still expects 'invalid discount'. The candidate identifies the same mismatch: the message changed in the source and the test still asserts the old message, which is the same underlying problem in the same place.",
+      "answer": {
+        "summary": "The rejects invalid discounts test fails because it expects the error message 'invalid discount', but applyDiscount now throws 'discount out of range'.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit changed the error message in src/cart.ts from 'invalid discount' to 'discount out of range', but test/cart.test.ts still asserts the old message. The code path is reached correctly (applyDiscount(100, 150) throws), so the stale test expectation is the mismatch. The diff does not show whether the message change was intentional, so this is an inference.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected [Function] to throw error including 'invalid discount' but got 'discount out of range'"
+          },
+          {
+            "source": "diff",
+            "quote": "+  if (pct < 0 || pct > 100) throw new Error('discount out of range');"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Update the expectation at test/cart.test.ts line 12 to toThrow('discount out of range'), or change the error message in src/cart.ts back to 'invalid discount' if the rename was unintended.",
+        "confidence": 0.75
+      }
+    },
+    {
+      "id": "09",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2984,
+      "confidence": 0.95,
+      "agentCost": 0.00035660000000000005,
+      "judgeCost": 0.0001126,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the new test waits 6s against Vitest's 5s default timeout, suggesting mocking the slow call or raising the timeout. The candidate identifies the same cause: a 6000ms wait in the new test exceeds the default 5000ms testTimeout, so the test times out. It omits the suggested fixes but the root cause matches.",
+      "answer": {
+        "summary": "The test 'loads latest prices' timed out because it waits 6000ms while the default test timeout is 5000ms.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The newly added test sleeps for 6000ms via setTimeout, which exceeds vitest's default 5000ms testTimeout, so the test is killed before its assertion runs. The code under test is not involved; the test itself is the problem.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "Error: Test timed out in 5000ms."
+          },
+          {
+            "source": "diff",
+            "quote": "+    await new Promise((resolve) => setTimeout(resolve, 6000));"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Remove the artificial 6000ms sleep (it asserts nothing meaningful, as expect(true).toBe(true) is always true), or if a long-running test is intended, pass an explicit timeout greater than 6000ms as the last argument to it().",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "09",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 3177,
+      "confidence": 0.95,
+      "agentCost": 0.0003976,
+      "judgeCost": 0.0001042,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the new test waits 6s while Vitest's default timeout is 5s, fixable by mocking or raising the timeout. The candidate identifies the same problem: a 6000ms sleep exceeding the 5000ms test timeout causing abort. They match in cause and location.",
+      "answer": {
+        "summary": "The newly added test 'loads latest prices' waits 6000ms via setTimeout, which exceeds vitest's 5000ms default timeout, so it fails with a timeout.",
+        "category": "timeout",
+        "failedStep": "Test",
+        "rootCause": "The added test in test/cart.test.ts sleeps for 6000ms, longer than the 5000ms test timeout, so vitest aborts it. The test body itself (expect(true).toBe(true)) is trivially correct; the problem is the artificial delay exceeding the timeout.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "× loads latest prices 5006ms"
+          },
+          {
+            "source": "log",
+            "quote": "Error: Test timed out in 5000ms."
+          },
+          {
+            "source": "diff",
+            "quote": "+    await new Promise((resolve) => setTimeout(resolve, 6000));"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Remove the 6000ms sleep (it is not needed for the assertion, which is trivially true), or if a real async wait is required, reduce it below the timeout or pass a larger timeout as the last argument to it(), e.g. it('loads latest prices', async () => {...}, 10000).",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "09",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2971,
+      "confidence": 0.95,
+      "agentCost": 0.00037810000000000003,
+      "judgeCost": 0.0001044,
+      "missingQuotes": [],
+      "judgeReason": "Both identify the same problem: the new test waits 6 seconds, exceeding Vitest's 5-second default timeout, so it fails. The candidate's explanation matches the reference's core cause, though it omits the suggested fixes (mock or raise timeout), which is not required for the cause to match.",
+      "answer": {
+        "summary": "The newly added test 'loads latest prices' sleeps for 6000ms but the default vitest timeout is 5000ms, so it times out.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The added test waits 6 seconds via setTimeout while vitest's default testTimeout is 5000ms, so the test is killed before completing. The test itself is the problem (artificial delay exceeding the timeout), not the application code.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "Error: Test timed out in 5000ms."
+          },
+          {
+            "source": "log",
+            "quote": "     15|     await new Promise((resolve) => setTimeout(resolve, 6000));"
+          },
+          {
+            "source": "diff",
+            "quote": "+    await new Promise((resolve) => setTimeout(resolve, 6000));"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Remove the artificial 6000ms sleep from the test (it does not test any real price-loading behavior), or if an async wait is truly needed, pass a larger timeout as the third argument to it() or mock timers instead of really sleeping.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "10",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2880,
+      "confidence": 0.95,
+      "agentCost": 0.0005136,
+      "judgeCost": 0.00011520000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says jsdom was added to package.json devDependencies without updating package-lock.json, so npm ci fails due to the mismatch. The candidate states the same thing: jsdom added to devDependencies without regenerating the lock file, causing npm ci to abort because package.json and the lock file are out of sync. The added version detail is extra but consistent.",
+      "answer": {
+        "summary": "npm ci failed because package.json was changed to add jsdom ^22.1.0 as a devDependency but package-lock.json was not updated to include jsdom and its transitive dependencies.",
+        "category": "dependency",
+        "failedStep": "Run npm ci",
+        "rootCause": "The commit adds jsdom ^22.1.0 to devDependencies in package.json without regenerating package-lock.json. npm ci requires package.json and the lock file to be in sync and aborts when packages such as jsdom@22.1.0 are missing from the lock file.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing."
+          },
+          {
+            "source": "log",
+            "quote": "npm error Missing: jsdom@22.1.0 from lock file"
+          },
+          {
+            "source": "diff",
+            "quote": "+    \"jsdom\": \"^22.1.0\""
+          }
+        ],
+        "file": "package-lock.json",
+        "fixIn": "config",
+        "suggestedFix": "Run `npm install` locally to update package-lock.json with jsdom and its dependencies, then commit the updated lock file alongside package.json.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "10",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 2766,
+      "confidence": 0.92,
+      "agentCost": 0.0005096,
+      "judgeCost": 0.0001262,
+      "missingQuotes": [],
+      "judgeReason": "The reference says jsdom was added to package.json devDependencies without updating package-lock.json, so npm ci fails due to the out-of-sync lock file. The candidate states the same mistake: jsdom added to devDependencies in package.json without regenerating package-lock.json, causing npm ci to fail because the lock file doesn't match. The extra detail about the specific version and missing tree is consistent and does not contradict the reference.",
+      "answer": {
+        "summary": "npm ci failed because package.json adds jsdom ^22.1.0 but package-lock.json was not updated to include jsdom and its transitive dependencies, so the lock file is out of sync.",
+        "category": "dependency",
+        "failedStep": "Run npm ci",
+        "rootCause": "The diff adds jsdom to devDependencies in package.json without regenerating package-lock.json. npm ci requires the lock file to match package.json, and reports jsdom@22.1.0 and its dependency tree as missing from the lock file.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing."
+          },
+          {
+            "source": "log",
+            "quote": "npm error Missing: jsdom@22.1.0 from lock file"
+          },
+          {
+            "source": "diff",
+            "quote": "+    \"jsdom\": \"^22.1.0\""
+          }
+        ],
+        "file": "package-lock.json",
+        "fixIn": "config",
+        "suggestedFix": "Run `npm install` locally to update package-lock.json with jsdom and its dependencies, then commit the updated lock file alongside package.json.",
+        "confidence": 0.92
+      }
+    },
+    {
+      "id": "10",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4112,
+      "confidence": 0.93,
+      "agentCost": 0.0006856000000000001,
+      "judgeCost": 0.00011570000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says jsdom was added to package.json devDependencies without updating package-lock.json, causing npm ci to fail on an out-of-sync lockfile. The candidate states the same thing: jsdom added to devDependencies in package.json without regenerating package-lock.json, so npm ci refuses due to mismatch. The extra version detail is fine.",
+      "answer": {
+        "summary": "npm ci fails because jsdom was added to package.json without updating package-lock.json, so the lock file is out of sync.",
+        "category": "dependency",
+        "failedStep": "Run npm ci",
+        "rootCause": "The commit added jsdom@^22.1.0 to devDependencies in package.json, but package-lock.json was not regenerated. npm ci refuses to install when the lock file does not match package.json, and reports jsdom and its transitive dependencies as missing from the lock file.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing."
+          },
+          {
+            "source": "log",
+            "quote": "npm error Missing: jsdom@22.1.0 from lock file"
+          },
+          {
+            "source": "diff",
+            "quote": "+    \"jsdom\": \"^22.1.0\""
+          }
+        ],
+        "file": "package-lock.json",
+        "fixIn": "config",
+        "suggestedFix": "Run `npm install` locally to update package-lock.json with the jsdom entries, then commit the updated package-lock.json alongside package.json.",
+        "confidence": 0.93
+      }
+    },
+    {
+      "id": "11",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 5400,
+      "confidence": 0.85,
+      "agentCost": 0.000663,
+      "judgeCost": 0.0001195,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test wrongly expects applyDiscount(200, 10) to be 20 while the function correctly returns the final price 180, so the test expectation is the bug. The candidate identifies the same problem: the test was changed to assert 20 (the discount amount) when the function correctly returns 180 (the final price), so the test expectation is wrong.",
+      "answer": {
+        "summary": "The test 'applies a percentage discount' fails because the commit changed its expected value from 180 to 20. applyDiscount(200, 10) returns 180, which the test asserted before this change.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit changed the expectation in test/cart.test.ts from 180 to 20. The original value of 180 matches a 10% discount applied to 200 (200 minus 20 would be 180, so the received value is consistent with the original assertion). The new expectation of 20 is the discount amount, not the discounted price. The code returned 180 and the test now asserts 20, so the test expectation is wrong.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 180 to be 20 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "-    expect(applyDiscount(200, 10)).toBe(180);"
+          },
+          {
+            "source": "diff",
+            "quote": "expect(applyDiscount(200, 10)).toBe(20)"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Revert the assertion to expect(applyDiscount(200, 10)).toBe(180), or if the intended behavior is to return only the discount amount, change the implementation of applyDiscount and update the test to match that intent. The provided diff does not include the source of applyDiscount, so this is inferred from the original passing assertion.",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "11",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 5178,
+      "confidence": 0.85,
+      "agentCost": 0.000643,
+      "judgeCost": 0.00012030000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test wrongly expects applyDiscount(200, 10) to be 20 while the code correctly returns 180, so the test expectation is the bug. The candidate says the commit changed the assertion from 180 to 20, which is the same mistake: the test expects 20 instead of the correct 180 that the code returns. The file name and commit history detail are extra but consistent.",
+      "answer": {
+        "summary": "The test 'applies a percentage discount' fails because the commit changed its expected value from 180 to 20. applyDiscount(200, 10) returns 180, which matches the original expectation, so the test expectation is wrong.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit altered the assertion in test/cart.test.ts from toBe(180) to toBe(20). 20 is the discount amount (10% of 200), not the discounted price. The original expectation of 180 matches the value the code returns, so the test's expectation was incorrectly changed.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 180 to be 20 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "-    expect(applyDiscount(200, 10)).toBe(180);"
+          },
+          {
+            "source": "diff",
+            "quote": "+    expect(applyDiscount(200, 10)).toBe(20)"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Revert the assertion to expect(applyDiscount(200, 10)).toBe(180); if the intended behavior is that the discounted price is returned. If the intent is to return the discount amount, the function's contract must change, which is a separate code change and should be confirmed with the author.",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "11",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4407,
+      "confidence": 0.9,
+      "agentCost": 0.0005305,
+      "judgeCost": 0.000105,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the test expects applyDiscount(200, 10) to equal 20 while the function correctly returns 180, so the test expectation is wrong. The candidate identifies the same problem: the assertion was changed to expect 20 while the code correctly returns 180, making the test expectation the error.",
+      "answer": {
+        "summary": "The test 'applies a percentage discount' fails because the commit changed its expected value from 180 to 20. applyDiscount(200, 10) returns 180, which matches the original expectation, so the test expectation is wrong.",
+        "category": "test_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit altered the assertion in test/cart.test.ts from toBe(180) to toBe(20). The code returns 180 (200 minus 10%), so the new expectation is incorrect. The original test was consistent with the code.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 180 to be 20 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "+    expect(applyDiscount(200, 10)).toBe(20)"
+          }
+        ],
+        "file": "test/cart.test.ts",
+        "fixIn": "test",
+        "suggestedFix": "Revert the expectation in test/cart.test.ts to expect(applyDiscount(200, 10)).toBe(180), or correct it to the intended discounted price if 180 is not intended.",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "12",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 5294,
+      "confidence": 0.95,
+      "agentCost": 0.0007122000000000001,
+      "judgeCost": 0.0001122,
+      "missingQuotes": [],
+      "judgeReason": "The reference names two bugs: subtotal adding price and qty instead of multiplying, and the discount error message changed to 'discount out of range' while the test expects 'invalid discount'. The candidate identifies both the same way, with the same locations and the same mistakes, plus an extra worked example.",
+      "answer": {
+        "summary": "Two tests in test/cart.test.ts fail because src/cart.ts was changed in this commit: subtotal now adds price and qty instead of multiplying them, and applyDiscount throws a different error message.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit introduced two regressions in src/cart.ts. In subtotal, the multiplication price * qty was replaced with addition, giving 10 + 2 + 5 + 1 = 18 instead of 25. In applyDiscount, the error message was changed from 'invalid discount' to 'discount out of range', which breaks the toThrow('invalid discount') assertion. The test expectations match the original code, so the code is wrong, not the tests.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "return items.reduce((sum, i) => sum + i.price + i.qty, 0);"
+          },
+          {
+            "source": "diff",
+            "quote": "if (pct < 0 || pct > 100) throw new Error('discount out of range');"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 18 to be 25 // Object.is equality"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected [Function] to throw error including 'invalid discount' but got 'discount out of range'"
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore the multiplication in subtotal: sum + i.price * i.qty. Restore the original message in applyDiscount: throw new Error('invalid discount'). Or, if the new message is intended, update the test expectation, but the original message is the safer choice since the test was passing before.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "12",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 6446,
+      "confidence": 0.8,
+      "agentCost": 0.0008077000000000001,
+      "judgeCost": 0.0001226,
+      "missingQuotes": [],
+      "judgeReason": "The reference lists two bugs: subtotal adding price and qty instead of multiplying, and the discount error message changed to 'discount out of range' while the test expects 'invalid discount'. The candidate identifies both the same subtotal addition-vs-multiplication bug and the same error message mismatch in applyDiscount(), so it covers all reference problems.",
+      "answer": {
+        "summary": "The commit changed subtotal() from price*qty to price+qty, causing the 'sums price × qty' test to fail (18 instead of 25). It also changed the discount error message, which causes the 'rejects invalid discounts' test to fail.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "In src/cart.ts, subtotal() now adds price and qty instead of multiplying them, so [{price:10,qty:2},{price:5,qty:1}] yields 18 rather than 25. Separately, applyDiscount() now throws 'discount out of range' instead of 'invalid discount', which breaks the test that expects the old message. The subtotal change is clearly wrong; the message change is likely intentional but was not reflected in the test.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price + i.qty, 0);"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 18 to be 25 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "+  if (pct < 0 || pct > 100) throw new Error('discount out of range');"
+          },
+          {
+            "source": "log",
+            "quote": "Expected: \"invalid discount\""
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore multiplication in subtotal: sum + i.price * i.qty. For the discount test, either revert the message to 'invalid discount' or update test/cart.test.ts to expect 'discount out of range', depending on which message is the intended contract.",
+        "confidence": 0.8
+      }
+    },
+    {
+      "id": "12",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": true,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": true,
+      "allOk": true,
+      "ms": 4985,
+      "confidence": 0.95,
+      "agentCost": 0.0006957,
+      "judgeCost": 0.00012190000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference names two bugs: subtotal adding price and qty instead of multiplying, and the discount error message changed to 'discount out of range' while the test expects 'invalid discount'. The candidate identifies both the same bugs in the same places (subtotal price+qty, applyDiscount message change), with a concrete example, so it covers all reference problems.",
+      "answer": {
+        "summary": "Two tests in test/cart.test.ts fail because src/cart.ts was changed in this commit: subtotal now adds price and qty instead of multiplying them, and applyDiscount throws a different error message.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The commit introduced two regressions in src/cart.ts. In subtotal, price * qty was replaced with price + qty, so [{price:10,qty:2},{price:5,qty:1}] yields 18 instead of 25. In applyDiscount, the thrown message was changed from 'invalid discount' to 'discount out of range', which the unchanged test still expects to match. The code change is the cause in both cases, and the tests reflect the intended behavior.",
+        "evidence": [
+          {
+            "source": "diff",
+            "quote": "+  return items.reduce((sum, i) => sum + i.price + i.qty, 0);"
+          },
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 18 to be 25 // Object.is equality"
+          },
+          {
+            "source": "diff",
+            "quote": "+  if (pct < 0 || pct > 100) throw new Error('discount out of range');"
+          },
+          {
+            "source": "log",
+            "quote": "Received: \"discount out of range\""
+          }
+        ],
+        "file": "src/cart.ts",
+        "fixIn": "code",
+        "suggestedFix": "Restore multiplication in subtotal: sum + i.price * i.qty. Restore the error message in applyDiscount to 'invalid discount', or update the test if the new message is intended.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "13",
+      "run": 0,
+      "stepOk": true,
+      "fileOk": false,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": false,
+      "allOk": false,
+      "ms": 4495,
+      "confidence": 0.5,
+      "agentCost": 0.0011069,
+      "judgeCost": 0.0001192,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the global flag was removed from the boundary-trimming regex, so only the first leading/trailing hyphen match is removed when multiple exist. The candidate instead says slugify leaves a trailing hyphen for inputs ending in punctuation, with no mention of the regex or the missing global flag. The symptom overlaps, but the candidate does not identify the same mistake in the same place.",
+      "answer": {
+        "summary": "The slug test fails because slugify('!!!Hello!!!') returns 'hello-' instead of 'hello', so a trailing hyphen is left in place. The added src/currencies.ts file is unrelated to this failure.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "The slugify implementation leaves a trailing hyphen when the input ends with punctuation. The slugify source is not in the provided diff, so this is inferred from the assertion output.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 'hello-' to be 'hello' // Object.is equality"
+          },
+          {
+            "source": "log",
+            "quote": "Received: \"hello-\""
+          }
+        ],
+        "file": null,
+        "fixIn": "code",
+        "suggestedFix": "Update slugify so it trims leading and trailing hyphens after replacing non-alphanumeric characters, for example by collapsing runs of hyphens and stripping hyphens from both ends.",
+        "confidence": 0.5
+      }
+    },
+    {
+      "id": "13",
+      "run": 1,
+      "stepOk": true,
+      "fileOk": false,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": false,
+      "allOk": false,
+      "ms": 5579,
+      "confidence": 0.5,
+      "agentCost": 0.0012279,
+      "judgeCost": 0.00013330000000000001,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the regex lost its global flag in the boundary-trimming step, so only some leading/trailing hyphens are removed when multiple matches exist. The candidate instead blames slugify() failing to strip a trailing hyphen from '!!!' input, without identifying the regex flag or the missing global flag. It describes a similar symptom but a different and vaguer mechanism, so it does not identify the same mistake in the same place.",
+      "answer": {
+        "summary": "The slug test fails because slugify('!!!Hello!!!') returns 'hello-' instead of 'hello', leaving a trailing hyphen. The slugify implementation is not in the provided diff, so the exact cause cannot be confirmed.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "Likely slugify() does not strip a trailing hyphen produced by the trailing '!!!' characters. The test name 'removes multiple leading and trailing hyphens' matches the expected output 'hello', so the test expectation appears correct and the code appears wrong. The slugify source was not provided, so this is inferred from the log only. The diff adds src/currencies.ts, which the log does not reference and which does not explain this failure.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 'hello-' to be 'hello' // Object.is equality"
+          },
+          {
+            "source": "log",
+            "quote": "Received: \"hello-\""
+          },
+          {
+            "source": "log",
+            "quote": "expect(slugify('!!!Hello!!!')).toBe('hello');"
+          }
+        ],
+        "file": null,
+        "fixIn": "code",
+        "suggestedFix": "Inspect the slugify implementation (not in the provided diff) and make it trim leading and trailing hyphens after replacing non-alphanumeric characters, so that '!!!Hello!!!' yields 'hello'.",
+        "confidence": 0.5
+      }
+    },
+    {
+      "id": "13",
+      "run": 2,
+      "stepOk": true,
+      "fileOk": false,
+      "fixInOk": true,
+      "evidenceOk": true,
+      "rootCauseOk": false,
+      "allOk": false,
+      "ms": 4613,
+      "confidence": 0.5,
+      "agentCost": 0.0011164,
+      "judgeCost": 0.0001192,
+      "missingQuotes": [],
+      "judgeReason": "The reference says the global flag was removed from the boundary-trimming regex, so only the first leading/trailing hyphen match is removed when multiple exist. The candidate blames slugify for leaving a trailing hyphen after punctuation stripping, but does not identify the regex flag removal as the mistake, and admits it is inferred without seeing the code. The underlying cause is not the same.",
+      "answer": {
+        "summary": "The slug test fails because slugify('!!!Hello!!!') returns 'hello-' instead of 'hello'. The diff only adds src/currencies.ts, which is unrelated to slugify, so the cause is probably in the slugify implementation but cannot be confirmed from the provided material.",
+        "category": "code_bug",
+        "failedStep": "Test",
+        "rootCause": "Likely the slugify function leaves a trailing hyphen after stripping punctuation, so it does not remove all trailing hyphens. The slugify source is not in the diff, so this is inferred from the assertion and the test name.",
+        "evidence": [
+          {
+            "source": "log",
+            "quote": "AssertionError: expected 'hello-' to be 'hello' // Object.is equality"
+          },
+          {
+            "source": "log",
+            "quote": "   × removes multiple leading and trailing hyphens 4ms"
+          }
+        ],
+        "file": null,
+        "fixIn": "code",
+        "suggestedFix": "Inspect slugify and ensure hyphen trimming runs after punctuation is replaced or removed, so trailing hyphens are stripped from the final result. The test expectation looks reasonable given its name, so leave it unchanged unless the intended behavior differs.",
+        "confidence": 0.5
+      }
+    }
+  ]
+}

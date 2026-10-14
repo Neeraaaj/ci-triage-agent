@@ -1,15 +1,15 @@
-import { getRepoClient, fetchFailureContext } from './github.js';
-import type { TriageJob } from './types/TriageJob.js';   // ← adjust to your file name
-import { triage } from './agent.js';   // put this with the other imports at the top
+import { triage, triageWithTools } from './agent.js';   // put this with the other imports at the top
 import { checkEvidence } from './verify.js';
 import { loadCase } from './replay.js';
 import { writeFileSync } from 'node:fs';
 import { renderComment } from './comment.js';
 
+const AGENT = process.env.AGENT ?? 'oneshot';
 const runId = Number(process.argv[2]);
 if (!runId) throw new Error('usage: tsx src/inspect.ts <runId>');
 
-const ctx = await loadCase(runId);
+const loaded = await loadCase(runId);
+const {ctx, readFile} = loaded;
 
 for (const j of ctx.failedJobs) {
   console.log(`\n===== job: ${j.name} | failed step: ${j.failedStep} =====`);
@@ -17,11 +17,25 @@ for (const j of ctx.failedJobs) {
 }
 console.log(`\n===== diff (${ctx.diff.split('\n').length} lines) =====`);
 console.log(ctx.diff);
+const useTools = process.argv.includes('--tools');
+
 const t0 = Date.now();
-const { result, usage } = await triage(ctx);
+const out = useTools
+  ? await triageWithTools(ctx, { readFile })
+  : await triage(ctx);
+const ms = Date.now() - t0;
+
+const filesRead = 'filesRead' in out ? out.filesRead : {};
+const toolCalls = 'toolCalls' in out ? out.toolCalls : [];
+
 console.log('\n===== TRIAGE =====');
-console.log(JSON.stringify(result, null, 2));
-console.log({ ms: Date.now() - t0, inputTokens: usage.input_tokens, outputTokens: usage.output_tokens });
-const md = renderComment(result, checkEvidence(result, ctx), runId);
+console.log(JSON.stringify(out.result, null, 2));
+console.log({ mode: AGENT, toolCalls, ms,
+              inputTokens: out.usage.input_tokens, outputTokens: out.usage.output_tokens });
+
+const evidence = checkEvidence(out.result, ctx, filesRead);
+console.log('evidence:', evidence);
+
+const md = renderComment(out.result, evidence, runId);   // reuse the same evidence object
 writeFileSync('comment-preview.md', md);
 console.log('wrote comment-preview.md');

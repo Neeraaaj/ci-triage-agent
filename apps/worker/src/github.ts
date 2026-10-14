@@ -69,10 +69,43 @@ export async function fetchFailureContext(octokit: any, job: any) {
     mediaType: { format: 'diff' },
   });
 
-  const diff = String(diffData ?? '')
-    .split('\n')
-    .slice(0, 300)
+  const fullDiff = String(diffData ?? '');
+  const diffLines = fullDiff.split('\n');
+  const maxDiffLines = 300;
+
+  const truncated = diffLines.length > maxDiffLines;
+
+  const visibleDiff = diffLines
+    .slice(0, maxDiffLines)
     .join('\n');
+
+  // Extract filenames from the diff headers.
+  const changedFiles = [
+    ...new Set(
+      fullDiff
+        .split('\n')
+        .filter((line) => line.startsWith('diff --git '))
+        .map((line) => line.split(' b/').pop()!)
+        .filter((path) => path !== '/dev/null'),
+    ),
+  ];
+
+  const truncationNote = truncated
+    ? `[diff truncated: showing ${maxDiffLines} of ${diffLines.length} lines]`
+    : '';
+
+  const changedFilesNote =
+    `[files changed in this commit: ${
+      changedFiles.length > 0 ? changedFiles.join(', ') : 'none detected'
+    }]`;
+
+  const diff = [
+    visibleDiff,
+    truncationNote,
+    changedFilesNote,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 
   return {
     failedJobs: failedJobContext,

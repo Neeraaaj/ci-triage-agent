@@ -1,5 +1,7 @@
 import { fetchFailureContext, getRepoClient } from "./github.js";
 import type { TriageJob } from "./types/TriageJob.js";
+import { READ_FILE_TOOL } from "./readFile.js";
+import { readRepoFile } from "./tools.js";
 
 const OWNER = "Neeraaaj";
 const REPO = 'triage-demo';
@@ -24,5 +26,9 @@ export async function loadCase(runId: number){
         prNumbers: run.pull_requests?.map((p) => p.number) ?? [],
     };
 
-    return fetchFailureContext(octokit, job);
+    const ctx = await fetchFailureContext(octokit, job);
+    const readFile = (path: string) =>
+        readRepoFile(octokit, OWNER, REPO, run.head_sha, path);
+
+    return { ctx, readFile };
 }
