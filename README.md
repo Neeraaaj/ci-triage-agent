@@ -217,6 +217,8 @@ evidence verification, and the PR comment. Tracing is initialised after secrets 
 flushed in a `finally` before the Lambda freezes, and degrades gracefully: if Langfuse
 is unreachable, triage still runs.
 
+![alt text](image.png)
+
 ## Limitations and roadmap
 
 - Comments only on PRs (commenting on direct pushes would need Contents: write)
