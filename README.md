@@ -210,6 +210,13 @@ For local webhook testing, point the App at a [smee.io](https://smee.io) channel
 
 ---
 
+### Observability
+Every triage is traced end to end with Langfuse (OpenTelemetry): GitHub fetch, each LLM
+turn as a generation (tokens + cost), each `read_file` call (path, size, blocked?),
+evidence verification, and the PR comment. Tracing is initialised after secrets load,
+flushed in a `finally` before the Lambda freezes, and degrades gracefully: if Langfuse
+is unreachable, triage still runs.
+
 ## Limitations and roadmap
 
 - Comments only on PRs (commenting on direct pushes would need Contents: write)
