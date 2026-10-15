@@ -25,7 +25,8 @@ export async function judgeRootCause(reference: string, candidate: string) {
         system: JUDGE_SYSTEM, 
         schema: Verdict, 
         maxTokens: 1000, 
-        user: buildUserMessage(reference, candidate)
+        user: buildUserMessage(reference, candidate),
+        name: "judge"
     });
 
     return { match: data.match, reason: data.reason, usage };  

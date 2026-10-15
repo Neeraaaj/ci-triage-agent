@@ -70,6 +70,8 @@ export class InfraStack extends cdk.Stack {
         APP_SECRET_NAME: 'ci-triage/app',
         PRIVATE_KEY_SECRET_NAME: 'ci-triage/github-private-key',
         AGENT: 'tools',
+        LANGFUSE_BASE_URL: 'https://us.cloud.langfuse.com',      // ← exactly the URL from your apps/worker/.env
+        OTEL_SERVICE_NAME: 'ci-triage-worker',
       },
     });
     appSecret.grantRead(workerFn);

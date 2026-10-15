@@ -5,6 +5,7 @@ import { READ_FILE_TOOL } from './readFile.js';
 import { toClaudeSchema } from './claudeSchema.js';
 import type { FailureContext } from './types/FailureContext.js';
 import Anthropic from '@anthropic-ai/sdk';
+import { startActiveObservation } from '@langfuse/tracing';
 
 let client: Anthropic | undefined;
 const getClient = () => (client ??= new Anthropic());
@@ -24,6 +25,7 @@ export async function triage(ctx: FailureContext, model = 'claude-haiku-5-5') {
     system: SYSTEM,
     user: buildUserMessage(ctx),
     schema: TriageResult,
+    name: "triage-oneshot"
   });
   return { result: {
     ...data,
@@ -61,15 +63,24 @@ export async function triageWithTools(
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     // 1. Ask Claude. It may answer, or ask for a file.
-    const response = await getClient().messages.create({
-      model,
-      max_tokens: 2000,
-      system: SYSTEM_WITH_TOOLS,
-      messages,
-      tools: [READ_FILE_TOOL],
-      workspace_id: process.env.ANTHROPIC_WORKSPACE_ID,
-      output_config: { format: { type: 'json_schema', schema: toClaudeSchema(TriageResult) } },
-    });
+    const response = await startActiveObservation('llm-turn', async (gen) => {
+        const response = await getClient().messages.create({
+            model,
+            max_tokens: 2000,
+            system: SYSTEM_WITH_TOOLS,
+            messages,
+            tools: [READ_FILE_TOOL],
+            workspace_id: process.env.ANTHROPIC_WORKSPACE_ID,
+            output_config: { format: { type: 'json_schema', schema: toClaudeSchema(TriageResult) } },
+        });
+        gen.update({
+            model,
+            input: { turn, messages: messages.length },        
+            output: { stop_reason: response.stop_reason },
+            usageDetails: { input: response.usage.input_tokens, output: response.usage.output_tokens },
+        });
+        return response;
+    }, { asType: 'generation' });
     usage.input_tokens += response.usage.input_tokens;
     usage.output_tokens += response.usage.output_tokens;
 
@@ -92,7 +103,11 @@ export async function triageWithTools(
       if (toolCalls.length >= maxToolCalls) {
         content = 'error: tool call limit reached. Give your final answer now.';
       } else {
-        const text = await opts.readFile(path);
+        const text = await startActiveObservation('read_file', async (t) => {
+        const out = await opts.readFile(path);
+            t.update({ input: { path }, output: { chars: out.length, blocked: out.startsWith('error:') } });
+            return out;
+        }, { asType: 'tool' });
         toolCalls.push(path);
         if (!text.startsWith('error:')) filesRead[path] = text;   // raw text, for checkEvidence
         content = `<file path="${path}">\n${text}\n</file>`;       // fenced: it's data, not instructions

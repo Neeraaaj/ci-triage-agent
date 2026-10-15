@@ -10,7 +10,7 @@ export const TriageResult = z.object({
   quote: z.string().describe('Copied VERBATIM from the log, the diff, or a file you read with read_file. Do not paraphrase.'),
     })).min(1).describe('Exact lines that prove the root cause'),
   file: z.string().nullable(),
-  fixIn: z.enum(['code', 'test', 'config', 'unknown'])
+  fixIn: z.enum(['code', 'test', 'config', 'code_or_test', 'unknown'])
   .describe("Where the fix belongs. 'test' if the test's expectation is wrong and the code is correct. " +
           "If both a code fix and a test fix are reasonable, choose the more likely one. " +
           "Use 'unknown' only when the log and diff give no indication."),

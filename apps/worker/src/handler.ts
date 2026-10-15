@@ -2,6 +2,7 @@ import type { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { handleJob } from './job.js';
 import type { TriageJob } from './types/TriageJob.js';
+import { initTracing, flushTracing } from './instrumentation.js';
 
 const sm = new SecretsManagerClient({});
 
@@ -31,6 +32,10 @@ function loadSecrets(): Promise<void> {
     process.env.ANTHROPIC_API_KEY = app.ANTHROPIC_API_KEY;
     if (app.ANTHROPIC_WORKSPACE_ID) process.env.ANTHROPIC_WORKSPACE_ID = app.ANTHROPIC_WORKSPACE_ID;
     process.env.GITHUB_PRIVATE_KEY = privateKey;
+
+    if (app.LANGFUSE_PUBLIC_KEY) process.env.LANGFUSE_PUBLIC_KEY = app.LANGFUSE_PUBLIC_KEY;
+    if (app.LANGFUSE_SECRET_KEY) process.env.LANGFUSE_SECRET_KEY = app.LANGFUSE_SECRET_KEY;
+    initTracing();
   })().catch((err) => {
     ready = undefined;   // don't cache a failure: let the next invocation try again
     throw err;
@@ -43,15 +48,22 @@ export async function handler(event: SQSEvent): Promise<SQSBatchResponse> {
 
   const batchItemFailures: SQSBatchItemFailure[] = [];
 
-  for (const record of event.Records) {
+  try{
+      for (const record of event.Records) {
+        try {
+          const job = JSON.parse(record.body) as TriageJob;
+          await handleJob(job);
+        } catch (err) {
+          console.error({ msg: 'job failed', messageId: record.messageId, err: String(err) });
+          batchItemFailures.push( {itemIdentifier: record.messageId} )
+        }
+      }
+  } finally {
     try {
-      const job = JSON.parse(record.body) as TriageJob;
-      await handleJob(job);
+      await flushTracing();
     } catch (err) {
-      console.error({ msg: 'job failed', messageId: record.messageId, err: String(err) });
-      batchItemFailures.push( {itemIdentifier: record.messageId} )
+      console.log({ msg: 'trace flush failed', err: String(err) });   // never fail the batch over tracing
     }
   }
-
   return { batchItemFailures };
 }
