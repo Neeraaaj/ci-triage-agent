@@ -4,9 +4,9 @@ const job = {
   deliveryId: 'local-invoke',
   installationId: 168128313,
   repo: 'Neeraaaj/triage-demo',
-  runId: 37590838986,
-  headSha: 'bc8bee54b9f8f839ffcf38b26292b557321b7dc7',
-  prNumbers: [1],
+  runId: 38230707199,
+  headSha: 'e130f1f14e3e2b78a17649b0f7b7db9284db4594',
+  prNumbers: [13],
 };
 
 const result = await handler({

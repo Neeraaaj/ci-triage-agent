@@ -69,6 +69,7 @@ export class InfraStack extends cdk.Stack {
         GITHUB_APP_ID: '5196825',
         APP_SECRET_NAME: 'ci-triage/app',
         PRIVATE_KEY_SECRET_NAME: 'ci-triage/github-private-key',
+        AGENT: 'tools',
       },
     });
     appSecret.grantRead(workerFn);

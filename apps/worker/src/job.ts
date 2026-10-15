@@ -1,45 +1,57 @@
-import { getRepoClient } from "./github.js";
-import { fetchFailureContext } from "./github.js";
-import type { TriageJob } from "./types/TriageJob.js";
-import { checkEvidence } from "./verify.js";
-import { renderComment } from "./comment.js";
-import { upsertComment } from "./post.js";
-import { triage } from "./agent.js";
+import { getRepoClient, fetchFailureContext } from './github.js';
+import type { TriageJob } from './types/TriageJob.js';
+import { checkEvidence } from './verify.js';
+import { renderComment } from './comment.js';
+import { upsertComment } from './post.js';
+import { triage, triageWithTools } from './agent.js';
+import { readRepoFile } from './tools.js';
 
 export async function handleJob(job: TriageJob) {
-    const octokit = await getRepoClient(job.installationId);
-    const ctx = await fetchFailureContext(octokit, job);
+  const octokit = await getRepoClient(job.installationId);
+  const ctx = await fetchFailureContext(octokit, job);
 
-    if(ctx.failedJobs.length === 0){
-        console.log({
-            msg: "no failed jobs",
-            runId: job.runId
-        });
-        return;
-    }
+  // 1. Guard FIRST: no failed jobs → nothing to triage, no API cost
+  if (ctx.failedJobs.length === 0) {
+    console.log({ msg: 'no failed jobs', runId: job.runId });
+    return;
+  }
 
-    const t0 = Date.now();
-    const { result, usage } = await triage(ctx);
-    const evidence = checkEvidence(result, ctx);
+  // 2. Build the file reader (after octokit exists)
+  const [owner, repo] = job.repo.split('/');
+  const readFile = (path: string) => readRepoFile(octokit, owner, repo, job.headSha, path);
 
+  // 3. Start the timer, then triage (kill switch: AGENT=oneshot rolls back)
+  const agent = process.env.AGENT === 'oneshot' ? 'oneshot' : 'tools';
+  const t0 = Date.now();
+  const out = agent === 'oneshot'
+    ? await triage(ctx)
+    : await triageWithTools(ctx, { readFile });
+  const ms = Date.now() - t0;
 
-    console.log({
-        msg: 'triaged',
-        deliveryId: job.deliveryId,
-        repo: job.repo,
-        runId: job.runId,
-        prNumbers: job.prNumbers,
-        summary: result.summary,
-        confidence: result.confidence,
-        evidenceOk: evidence.ok,
-        missingQuotes: evidence.missing,
-        ms: Date.now() - t0,
-        inputTokens: usage.input_tokens,
-        outputTokens: usage.output_tokens,
-    });
+  const filesRead = 'filesRead' in out ? out.filesRead : {};
+  const toolCalls = 'toolCalls' in out ? out.toolCalls : [];
+  const evidence = checkEvidence(out.result, ctx, filesRead);
 
-    const body = renderComment(result, evidence, job.runId);
-    const posted = await upsertComment(octokit, job, body);
-    console.log({ msg: 'comment', runId: job.runId, ...posted });
-    return { result, evidence, octokit };  
+  console.log({
+    msg: 'triaged',
+    agent,
+    toolCalls,
+    deliveryId: job.deliveryId,
+    repo: job.repo,
+    runId: job.runId,
+    prNumbers: job.prNumbers,
+    summary: out.result.summary,
+    confidence: out.result.confidence,
+    evidenceOk: evidence.ok,
+    missingQuotes: evidence.missing,
+    ms,
+    inputTokens: out.usage.input_tokens,
+    outputTokens: out.usage.output_tokens,
+  });
+
+  const body = renderComment(out.result, evidence, job.runId);
+  const posted = await upsertComment(octokit, job, body);
+  console.log({ msg: 'comment', runId: job.runId, ...posted });
+
+  return { result: out.result, evidence };
 }

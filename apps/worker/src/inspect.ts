@@ -4,7 +4,7 @@ import { loadCase } from './replay.js';
 import { writeFileSync } from 'node:fs';
 import { renderComment } from './comment.js';
 
-const AGENT = process.env.AGENT ?? 'oneshot';
+const AGENT = process.argv.includes('--tools') ? 'tools' : (process.env.AGENT ?? 'oneshot');
 const runId = Number(process.argv[2]);
 if (!runId) throw new Error('usage: tsx src/inspect.ts <runId>');
 

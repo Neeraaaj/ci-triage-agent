@@ -105,6 +105,27 @@ npx tsx --env-file=.env src/inspect.ts <runId>   # replay one CI run
 
 ---
 
+### Agent with tools: A/B results
+
+The one-shot agent sees only the failing log and the first 300 lines of the diff.
+The tool agent can also call `read_file` (allowlisted paths, 300-line cap, max 3 calls)
+in a ReAct loop. Same prompt, same answer key, 13 cases × 3 runs:
+
+| | One-shot | With `read_file` |
+|---|---|---|
+| Case 13: bug hidden past the diff cutoff | 0/3 | **3/3** |
+| Cases 01–12 | 36/36 | 35/36 |
+| pass@1 / pass^3 | 92.3% / 92.3% | **97.4%** / 92.3% |
+| Avg tool calls (easy cases / case 13) | n/a | 0.00 / 1.00 |
+| Cost per triage | $0.00048 | $0.00064 (+35%) |
+| p95 latency | 6.1 s | 7.0 s |
+
+**How it got here:** first, a deterministic fix: show the model when the diff is
+truncated and which files changed. That fixed the *file* (0/3 → 3/3) but not the
+*diagnosis*. Then `read_file`: the agent requests `src/slug.ts`, finds the missing `g`
+flag, and quotes the line as verified evidence (`source: "file"`). It never opens a file
+on cases that don't need it.
+
 ## Reliability and security
 
 - **Webhook authenticity:** HMAC-SHA256 over the raw body with `timingSafeEqual`, verified before any parsing

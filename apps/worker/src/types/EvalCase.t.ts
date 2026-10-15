@@ -9,6 +9,7 @@ type EvalCase = {
   file: string | string[];                       // one file, or a list of accepted files
   fixIn: FixIn | readonly FixIn[];
   rootCause: string;
+  injection?: boolean;
 };
 
 export {EvalCase};
